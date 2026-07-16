@@ -1,6 +1,4 @@
 {
-  "buildCommand": "cd packages/client && npm run build && cp -r dist ../../.vercel/output/static",
-  "devCommand": "npm run dev",
   "installCommand": "npm install --ignore-scripts && cd packages/client && npm install --ignore-scripts",
   "framework": "vite",
   "outputDirectory": "packages/client/dist"
