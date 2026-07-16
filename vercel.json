@@ -1,0 +1,21 @@
+{
+  "buildCommand": "cd packages/client && npm run build",
+  "installCommand": "npm install --ignore-scripts",
+  "outputDirectory": "packages/client/dist",
+  "env": {
+    "DATABASE_URL": "@nyxbeacon_database_url",
+    "VITE_API_URL": "@nyxbeacon_api_url"
+  },
+  "functions": {
+    "api/index.js": {
+      "memory": 1024,
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api"
+    }
+  ]
+}
