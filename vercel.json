@@ -3,16 +3,5 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install --ignore-scripts && cd packages/client && npm install --ignore-scripts",
   "framework": "vite",
-  "outputDirectory": "packages/client/dist",
-  "env": {
-    "DATABASE_URL": {
-      "description": "Prisma Postgres connection string"
-    },
-    "NODE_ENV": {
-      "description": "Environment mode (production/development)"
-    },
-    "VITE_API_URL": {
-      "description": "API backend URL"
-    }
-  }
+  "outputDirectory": "packages/client/dist"
 }
