@@ -1,0 +1,261 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ HOSPITAL STRUCTURE ============
+
+model Unit {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  floor     Int
+  capacity  Int
+  beds      Bed[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("units")
+}
+
+model Bed {
+  id         Int      @id @default(autoincrement())
+  bedNumber  String   // A101, B201, etc.
+  unitId     Int
+  unit       Unit     @relation(fields: [unitId], references: [id])
+  status     BedStatus @default(AVAILABLE)
+  lastCleaned DateTime?
+  notes      String?
+  admission  Admission?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([bedNumber, unitId])
+  @@map("beds")
+}
+
+enum BedStatus {
+  AVAILABLE
+  OCCUPIED
+  PENDING_DISCHARGE
+  MAINTENANCE
+  CLEANING
+}
+
+// ============ PATIENT MANAGEMENT ============
+
+model Patient {
+  id             Int      @id @default(autoincrement())
+  mrn            String   @unique // Medical Record Number
+  firstName      String
+  lastName       String
+  dateOfBirth    DateTime
+  gender         String   // M, F, Other
+  phone          String?
+  email          String?
+  address        String?
+  emergencyContact String?
+  insuranceProvider String?
+  insurancePolicyId String?
+  admissions     Admission[]
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("patients")
+}
+
+// ============ ADMISSIONS & DISCHARGES ============
+
+model Admission {
+  id              Int      @id @default(autoincrement())
+  patientId       Int
+  patient         Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  bedId           Int      @unique
+  bed             Bed      @relation(fields: [bedId], references: [id], onDelete: Cascade)
+  clinicalLevel   ClinicalLevel @default(MED_SURG)
+  diet            String?  // Regular, Diabetic, Low-sodium, etc.
+  allergies       String?
+  specialNeeds    String?
+  transferStatus  TransferStatus @default(NOT_PLANNED)
+  admissionDate   DateTime
+  discharge       Discharge?
+  auditLogs       AuditLog[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("admissions")
+}
+
+enum ClinicalLevel {
+  ICU
+  STEP_DOWN
+  MED_SURG
+  SKILLED_NURSING
+  OBSERVATION
+}
+
+enum TransferStatus {
+  NOT_PLANNED
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+}
+
+model Discharge {
+  id              Int      @id @default(autoincrement())
+  admissionId     Int      @unique
+  admission       Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+  scheduledDate   DateTime
+  actualDate      DateTime?
+  dischargeType   DischargeType @default(HOME)
+  disposition     String?  // Home, SNF, Hospital transfer, etc.
+  followUpRequired Boolean  @default(false)
+  followUpDetails String?
+  status          DischargeStatus @default(SCHEDULED)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("discharges")
+}
+
+enum DischargeType {
+  HOME
+  SNF // Skilled Nursing Facility
+  TRANSFER
+  AMA // Against Medical Advice
+  EXPIRED
+  LEFT_WITHOUT_DISCHARGE
+}
+
+enum DischargeStatus {
+  SCHEDULED
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+// ============ HOUSEKEEPING & MAINTENANCE ============
+
+model HousekeepingTask {
+  id          Int       @id @default(autoincrement())
+  bedId       Int
+  taskType    TaskType
+  priority    Priority  @default(NORMAL)
+  status      TaskStatus @default(PENDING)
+  notes       String?
+  assignedTo  String?   // Staff member
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+  updatedAt   DateTime  @updatedAt
+
+  @@map("housekeeping_tasks")
+}
+
+enum TaskType {
+  CLEANING
+  MAINTENANCE
+  REPAIR
+  DEEP_CLEAN
+  DISINFECTION
+  LINEN_CHANGE
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+// ============ AUDIT & COMPLIANCE ============
+
+model AuditLog {
+  id          Int     @id @default(autoincrement())
+  entityType  String  // "Admission", "Discharge", "Patient", etc.
+  entityId    Int
+  admissionId Int?
+  admission   Admission? @relation(fields: [admissionId], references: [id], onDelete: SetNull)
+  action      String  // "CREATE", "UPDATE", "DISCHARGE", etc.
+  changes     String? // JSON of what changed
+  userId      String  // Who performed the action
+  userRole    String
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@map("audit_logs")
+}
+
+// ============ ALERTS & NOTIFICATIONS ============
+
+model Alert {
+  id          Int       @id @default(autoincrement())
+  type        AlertType
+  severity    Severity  @default(INFO)
+  title       String
+  message     String
+  bedId       Int?
+  patientId   Int?
+  admissionId Int?
+  read        Boolean   @default(false)
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@map("alerts")
+}
+
+enum AlertType {
+  DISCHARGE_REMINDER
+  HOUSEKEEPING_NEEDED
+  MAINTENANCE_REQUIRED
+  ADMISSION_CONFIRMATION
+  TRANSFER_SCHEDULED
+  BED_AVAILABLE
+  CAPACITY_ALERT
+  CLINICAL_ALERT
+}
+
+enum Severity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+// ============ USER & SETTINGS ============
+
+model User {
+  id        Int     @id @default(autoincrement())
+  email     String  @unique
+  name      String
+  password  String  // hashed
+  role      UserRole @default(NURSE)
+  active    Boolean @default(true)
+  lastLogin DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  NURSE
+  DISCHARGE_COORDINATOR
+  HOUSEKEEPING
+  MAINTENANCE
+  MANAGER
+}
