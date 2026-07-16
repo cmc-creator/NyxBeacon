@@ -1,0 +1,12 @@
+{
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install --ignore-scripts",
+  "framework": "vite",
+  "outputDirectory": "packages/client/dist",
+  "env": [
+    "DATABASE_URL",
+    "NODE_ENV",
+    "VITE_API_URL"
+  ]
+}

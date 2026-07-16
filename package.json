@@ -1,0 +1,26 @@
+{
+  "name": "nyxbeacon-bedboard",
+  "version": "1.0.0",
+  "description": "Hospital Bed Board & Patient Management System",
+  "private": true,
+  "scripts": {
+    "setup": "npm run setup-server && npm run setup-client && npm run setup-prisma",
+    "setup-server": "cd packages/server && npm install",
+    "setup-client": "cd packages/client && npm install",
+    "setup-prisma": "cd packages/prisma && npm install",
+    "dev": "concurrently \"cd packages/server && npm run dev\" \"cd packages/client && npm run dev\"",
+    "dev-server": "cd packages/server && npm run dev",
+    "dev-client": "cd packages/client && npm run dev",
+    "build": "cd packages/server && npm run build && cd ../client && npm run build",
+    "build-server": "cd packages/server && npm run build",
+    "build-client": "cd packages/client && npm run build",
+    "start": "cd packages/server && npm run start",
+    "db:push": "cd packages/prisma && npm run db:push",
+    "db:migrate": "cd packages/prisma && npm run db:migrate",
+    "db:seed": "cd packages/prisma && npm run db:seed",
+    "db:studio": "cd packages/prisma && npm run studio"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
