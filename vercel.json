@@ -1,4 +1,5 @@
 {
+  "buildCommand": "cd packages/client && npm run build",
   "installCommand": "npm install --ignore-scripts && cd packages/client && npm install --ignore-scripts",
   "framework": "vite",
   "outputDirectory": "packages/client/dist"
