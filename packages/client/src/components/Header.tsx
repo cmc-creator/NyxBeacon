@@ -14,7 +14,7 @@ export const Header: React.FC<HeaderProps> = ({ isConnected }) => {
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-amber-500 to-amber-600 rounded-lg blur opacity-75" />
               <div className="relative px-3 py-2 bg-gradient-to-r from-amber-500 to-amber-600 rounded-lg">
-                <span className="text-2xl">🔦</span>
+                <img src="/nyxbeaconlogo.png" alt="NyxBeacon" className="h-8 w-8 object-contain" />
               </div>
             </div>
             <div>
