@@ -1,9 +1,7 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
-
-dotenv.config();
+const express = require('express');
+const cors = require('cors');
+require('dotenv').config();
+const { PrismaClient } = require('@prisma/client');
 
 const app = express();
 const prisma = new PrismaClient();
@@ -282,4 +280,4 @@ app.patch('/api/discharges/:id/confirm', async (req, res) => {
   }
 });
 
-export default app;
+module.exports = app;
