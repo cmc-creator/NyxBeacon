@@ -42,24 +42,24 @@ export const BedBoard: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      'AVAILABLE': 'bg-green-50 border-green-300 hover:bg-green-100',
-      'OCCUPIED': 'bg-blue-50 border-blue-300 hover:bg-blue-100',
-      'PENDING_DISCHARGE': 'bg-yellow-50 border-yellow-300 hover:bg-yellow-100',
-      'MAINTENANCE': 'bg-red-50 border-red-300 hover:bg-red-100',
-      'CLEANING': 'bg-purple-50 border-purple-300 hover:bg-purple-100',
+      'AVAILABLE': 'bg-gradient-to-br from-green-900/40 to-green-800/40 border-green-500/50 hover:from-green-900/60 hover:to-green-800/60 shadow-lg shadow-green-500/20',
+      'OCCUPIED': 'bg-gradient-to-br from-blue-900/40 to-blue-800/40 border-blue-500/50 hover:from-blue-900/60 hover:to-blue-800/60 shadow-lg shadow-blue-500/20',
+      'PENDING_DISCHARGE': 'bg-gradient-to-br from-amber-900/40 to-amber-800/40 border-amber-500/50 hover:from-amber-900/60 hover:to-amber-800/60 shadow-lg shadow-amber-500/20',
+      'MAINTENANCE': 'bg-gradient-to-br from-red-900/40 to-red-800/40 border-red-500/50 hover:from-red-900/60 hover:to-red-800/60 shadow-lg shadow-red-500/20',
+      'CLEANING': 'bg-gradient-to-br from-purple-900/40 to-purple-800/40 border-purple-500/50 hover:from-purple-900/60 hover:to-purple-800/60 shadow-lg shadow-purple-500/20',
     }
-    return colors[status] || 'bg-gray-50 border-gray-300'
+    return colors[status] || 'bg-gradient-to-br from-slate-700 to-slate-600 border-slate-500/50 shadow-lg shadow-slate-500/10'
   }
 
   const getStatusBadgeColor = (status: string) => {
     const colors: Record<string, string> = {
-      'AVAILABLE': 'bg-green-100 text-green-800',
-      'OCCUPIED': 'bg-blue-100 text-blue-800',
-      'PENDING_DISCHARGE': 'bg-yellow-100 text-yellow-800',
-      'MAINTENANCE': 'bg-red-100 text-red-800',
-      'CLEANING': 'bg-purple-100 text-purple-800',
+      'AVAILABLE': 'bg-green-500/20 text-green-300 border border-green-500/50',
+      'OCCUPIED': 'bg-blue-500/20 text-blue-300 border border-blue-500/50',
+      'PENDING_DISCHARGE': 'bg-amber-500/20 text-amber-300 border border-amber-500/50',
+      'MAINTENANCE': 'bg-red-500/20 text-red-300 border border-red-500/50',
+      'CLEANING': 'bg-purple-500/20 text-purple-300 border border-purple-500/50',
     }
-    return colors[status] || 'bg-gray-100 text-gray-800'
+    return colors[status] || 'bg-slate-500/20 text-slate-300 border border-slate-500/50'
   }
 
   const filteredBeds = selectedUnit
@@ -69,8 +69,11 @@ export const BedBoard: React.FC = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-96">
-        <div className="animate-spin">
-          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full"></div>
+        <div className="space-y-4 text-center">
+          <div className="animate-spin">
+            <div className="w-16 h-16 border-4 border-amber-900/20 border-t-amber-500 rounded-full"></div>
+          </div>
+          <p className="text-gray-400 text-sm">Loading bed board...</p>
         </div>
       </div>
     )
@@ -78,43 +81,63 @@ export const BedBoard: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Premium Header with Stats */}
+      <div className="grid grid-cols-4 gap-4 mb-8">
+        <div className="bg-gradient-to-br from-slate-700/50 to-slate-700/30 border border-amber-500/20 rounded-xl p-4 backdrop-blur-sm">
+          <div className="text-xs text-gray-400 uppercase tracking-widest">Total Beds</div>
+          <div className="text-3xl font-bold text-amber-400">{beds.length}</div>
+        </div>
+        <div className="bg-gradient-to-br from-slate-700/50 to-slate-700/30 border border-green-500/20 rounded-xl p-4 backdrop-blur-sm">
+          <div className="text-xs text-gray-400 uppercase tracking-widest">Available</div>
+          <div className="text-3xl font-bold text-green-400">{beds.filter(b => b.status === 'AVAILABLE').length}</div>
+        </div>
+        <div className="bg-gradient-to-br from-slate-700/50 to-slate-700/30 border border-blue-500/20 rounded-xl p-4 backdrop-blur-sm">
+          <div className="text-xs text-gray-400 uppercase tracking-widest">Occupied</div>
+          <div className="text-3xl font-bold text-blue-400">{beds.filter(b => b.status === 'OCCUPIED').length}</div>
+        </div>
+        <div className="bg-gradient-to-br from-slate-700/50 to-slate-700/30 border border-amber-500/20 rounded-xl p-4 backdrop-blur-sm">
+          <div className="text-xs text-gray-400 uppercase tracking-widest">Occupancy Rate</div>
+          <div className="text-3xl font-bold text-amber-400">{Math.round((beds.filter(b => b.status === 'OCCUPIED').length / beds.length) * 100)}%</div>
+        </div>
+      </div>
+
       {/* Controls */}
-      <div className="flex justify-between items-center">
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">Filter by Unit</label>
+      <div className="flex justify-between items-end gap-6">
+        <div className="space-y-2 flex-1">
+          <label className="block text-sm font-semibold text-gray-300 uppercase tracking-wider">Filter by Unit</label>
           <select
             value={selectedUnit || ''}
             onChange={(e) => setSelectedUnit(Number(e.target.value))}
-            className="block w-48 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-4 py-3 bg-slate-700/50 border border-amber-500/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition"
           >
             {units.map(unit => (
-              <option key={unit.id} value={unit.id}>
+              <option key={unit.id} value={unit.id} className="bg-slate-800">
                 {unit.name} ({unit.beds?.length || 0} beds)
               </option>
             ))}
           </select>
         </div>
 
-        <div className="flex space-x-2">
+        <div className="flex space-x-2 bg-slate-700/50 p-1.5 rounded-lg border border-amber-500/20">
           <button
             onClick={() => setViewMode('grid')}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
+            className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-300 ${
               viewMode === 'grid'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-900 shadow-lg'
+                : 'text-gray-300 hover:text-white'
             }`}
           >
-            Grid View
+            📊 Grid
           </button>
           <button
             onClick={() => setViewMode('list')}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
+            className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-300 ${
               viewMode === 'list'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-900 shadow-lg'
+                : 'text-gray-300 hover:text-white'
             }`}
           >
-            List View
+            📋 List
           </button>
         </div>
       </div>
@@ -150,38 +173,38 @@ export const BedBoard: React.FC = () => {
 
       {/* Bed Display */}
       {viewMode === 'grid' ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 pt-4">
           {filteredBeds.map(bed => (
             <BedCard key={bed.id} bed={bed} statusColor={getStatusColor(bed.status)} badgeColor={getStatusBadgeColor(bed.status)} />
           ))}
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto pt-4">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b-2 border-gray-300">
-                <th className="text-left px-4 py-3 font-semibold">Bed</th>
-                <th className="text-left px-4 py-3 font-semibold">Unit</th>
-                <th className="text-left px-4 py-3 font-semibold">Status</th>
-                <th className="text-left px-4 py-3 font-semibold">Patient</th>
-                <th className="text-left px-4 py-3 font-semibold">Admission Date</th>
+              <tr className="border-b border-amber-500/30">
+                <th className="text-left px-4 py-4 font-semibold text-gray-300 text-xs uppercase tracking-wider">Bed Number</th>
+                <th className="text-left px-4 py-4 font-semibold text-gray-300 text-xs uppercase tracking-wider">Unit</th>
+                <th className="text-left px-4 py-4 font-semibold text-gray-300 text-xs uppercase tracking-wider">Status</th>
+                <th className="text-left px-4 py-4 font-semibold text-gray-300 text-xs uppercase tracking-wider">Patient</th>
+                <th className="text-left px-4 py-4 font-semibold text-gray-300 text-xs uppercase tracking-wider">Admission Date</th>
               </tr>
             </thead>
             <tbody>
               {filteredBeds.map(bed => (
-                <tr key={bed.id} className="border-b border-gray-200 hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium">{bed.bedNumber}</td>
-                  <td className="px-4 py-3">{bed.unit?.name}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(bed.status)}`}>
+                <tr key={bed.id} className="border-b border-slate-700/50 hover:bg-slate-700/30 transition">
+                  <td className="px-4 py-4 font-semibold text-white">{bed.bedNumber}</td>
+                  <td className="px-4 py-4 text-gray-400">{bed.unit?.name}</td>
+                  <td className="px-4 py-4">
+                    <span className={`inline-block px-3 py-1 rounded-lg text-xs font-semibold ${getStatusBadgeColor(bed.status)}`}>
                       {bed.status.replace(/_/g, ' ')}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
-                    {bed.admission ? `${bed.admission.patient.firstName} ${bed.admission.patient.lastName}` : '-'}
+                  <td className="px-4 py-4 text-gray-300">
+                    {bed.admission ? `${bed.admission.patient.firstName} ${bed.admission.patient.lastName}` : '—'}
                   </td>
-                  <td className="px-4 py-3">
-                    {bed.admission ? new Date(bed.admission.admissionDate).toLocaleDateString() : '-'}
+                  <td className="px-4 py-4 text-gray-400">
+                    {bed.admission ? new Date(bed.admission.admissionDate).toLocaleDateString() : '—'}
                   </td>
                 </tr>
               ))}
@@ -190,15 +213,15 @@ export const BedBoard: React.FC = () => {
         </div>
       )}
 
-      {/* Legend */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <h3 className="font-semibold mb-3 text-gray-700">Status Legend</h3>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <LegendItem color="bg-green-100" text="Available" />
-          <LegendItem color="bg-blue-100" text="Occupied" />
-          <LegendItem color="bg-yellow-100" text="Pending Discharge" />
-          <LegendItem color="bg-red-100" text="Maintenance" />
-          <LegendItem color="bg-purple-100" text="Cleaning" />
+      {/* Premium Legend */}
+      <div className="bg-gradient-to-br from-slate-700/50 to-slate-700/30 border border-amber-500/20 rounded-xl p-6 mt-6">
+        <h3 className="font-bold text-gray-200 mb-4 text-sm uppercase tracking-wider">Room Status Legend</h3>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <LegendItem color="from-green-900/40 to-green-800/40 border-green-500/50" text="✓ Available" />
+          <LegendItem color="from-blue-900/40 to-blue-800/40 border-blue-500/50" text="● Occupied" />
+          <LegendItem color="from-amber-900/40 to-amber-800/40 border-amber-500/50" text="⊃ Pending Discharge" />
+          <LegendItem color="from-red-900/40 to-red-800/40 border-red-500/50" text="⚠ Maintenance" />
+          <LegendItem color="from-purple-900/40 to-purple-800/40 border-purple-500/50" text="◆ Cleaning" />
         </div>
       </div>
     </div>
@@ -213,17 +236,17 @@ interface BedCardProps {
 
 const BedCard: React.FC<BedCardProps> = ({ bed, statusColor, badgeColor }) => {
   return (
-    <div className={`border-2 rounded-lg p-3 transition cursor-pointer ${statusColor}`}>
-      <div className="font-bold text-lg text-gray-800">{bed.bedNumber}</div>
-      <span className={`inline-block mt-2 px-2 py-1 rounded text-xs font-medium ${badgeColor}`}>
+    <div className={`border rounded-xl p-4 transition-all duration-300 hover:scale-105 cursor-pointer backdrop-blur-sm ${statusColor}`}>
+      <div className="font-bold text-lg text-white mb-2">{bed.bedNumber}</div>
+      <span className={`inline-block px-2 py-1 rounded-lg text-xs font-semibold ${badgeColor}`}>
         {bed.status.replace(/_/g, ' ')}
       </span>
       {bed.admission && (
-        <div className="mt-2 text-xs">
-          <div className="font-medium text-gray-800 truncate">
+        <div className="mt-3 space-y-1 text-xs">
+          <div className="font-semibold text-gray-100 truncate">
             {bed.admission.patient.firstName} {bed.admission.patient.lastName}
           </div>
-          <div className="text-gray-600 mt-1">{bed.unit?.name}</div>
+          <div className="text-gray-400">{bed.unit?.name}</div>
         </div>
       )}
     </div>
@@ -238,11 +261,11 @@ interface StatCardProps {
 
 const StatCard: React.FC<StatCardProps> = ({ label, value, color }) => {
   return (
-    <div className="bg-white rounded-lg shadow p-4">
+    <div className="bg-gradient-to-br from-slate-700/50 to-slate-700/30 border border-amber-500/20 rounded-xl shadow-lg p-4">
       <div className={`text-3xl font-bold ${color} text-white rounded-lg p-2 inline-block mb-2`}>
         {value}
       </div>
-      <div className="text-sm text-gray-600 font-medium">{label}</div>
+      <div className="text-xs text-gray-400 font-semibold uppercase tracking-wider">{label}</div>
     </div>
   )
 }
@@ -254,9 +277,9 @@ interface LegendItemProps {
 
 const LegendItem: React.FC<LegendItemProps> = ({ color, text }) => {
   return (
-    <div className="flex items-center space-x-2">
-      <div className={`w-4 h-4 rounded ${color}`}></div>
-      <span className="text-sm text-gray-700">{text}</span>
+    <div className="flex items-center space-x-3 p-3 bg-gradient-to-br rounded-lg border border-slate-700/50">
+      <div className={`w-6 h-6 rounded-lg bg-gradient-to-br ${color}`}></div>
+      <span className="text-sm text-gray-300 font-medium">{text}</span>
     </div>
   )
 }
