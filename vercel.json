@@ -1,6 +1,6 @@
 {
   "buildCommand": "npm run build-client",
-  "installCommand": "npm install",
+  "installCommand": "npm install --force",
   "outputDirectory": "packages/client/dist",
   "functions": {
     "api/index.js": {
