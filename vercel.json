@@ -1,9 +1,25 @@
 {
+  "buildCommand": "npm run build-client",
   "installCommand": "npm install --force",
   "outputDirectory": "packages/client/dist",
+  "env": {
+    "DATABASE_URL": "@database_url"
+  },
   "functions": {
     "api/index.js": {
-      "runtime": "@vercel/node@3.0.0"
+      "runtime": "@vercel/node@3.0.0",
+      "memory": 1024,
+      "maxDuration": 30
     }
-  }
+  },
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
 }
