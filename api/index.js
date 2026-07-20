@@ -1,36 +1,47 @@
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
+// Vercel Serverless Handler for NyxBeacon API
 const { PrismaClient } = require('@prisma/client');
 
-const app = express();
-const prisma = new PrismaClient();
+let prisma = null;
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+function getPrisma() {
+  if (!prisma) {
+    prisma = new PrismaClient();
+  }
+  return prisma;
+}
 
-// Request logging
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} ${req.method} ${req.path}`);
-  next();
-});
-
-// Health check
-app.get('/api/health', async (req, res) => {
+// Health check - tests database connectivity
+async function handleHealth(req, res) {
+  if (req.method !== 'GET') {
+    res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
+  
   try {
-    await prisma.$queryRaw`SELECT 1`;
-    res.json({ status: 'ok', timestamp: new Date() });
+    await getPrisma().$queryRaw`SELECT 1`;
+    res.status(200).json({ 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      message: 'Database connected'
+    });
   } catch (error) {
     console.error('Health check failed:', error);
-    res.status(500).json({ status: 'error', message: error.message });
+    res.status(500).json({ 
+      status: 'error', 
+      message: error.message 
+    });
   }
-});
+}
 
-// BEDS
-app.get('/api/beds', async (req, res) => {
+// Get all beds
+async function handleBeds(req, res) {
+  if (req.method !== 'GET') {
+    res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
+  
   try {
-    const beds = await prisma.bed.findMany({
+    const beds = await getPrisma().bed.findMany({
       include: {
         unit: true,
         admission: {
@@ -41,243 +52,124 @@ app.get('/api/beds', async (req, res) => {
         },
       },
     });
-    res.json(beds);
+    res.status(200).json(beds);
   } catch (error) {
-    console.error(error);
+    console.error('Failed to fetch beds:', error);
     res.status(500).json({ error: 'Failed to fetch beds' });
   }
-});
+}
 
-app.get('/api/beds/unit/:unitId', async (req, res) => {
+// Get beds by unit
+async function handleBedsByUnit(req, res) {
+  const { unitId } = req.query;
+  
+  if (req.method !== 'GET') {
+    res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
+  
   try {
-    const beds = await prisma.bed.findMany({
-      where: { unitId: parseInt(req.params.unitId) },
+    const beds = await getPrisma().bed.findMany({
+      where: { unitId },
       include: {
         unit: true,
         admission: {
           include: {
             patient: true,
+            discharge: true,
           },
         },
       },
     });
-    res.json(beds);
+    res.status(200).json(beds);
   } catch (error) {
+    console.error('Failed to fetch beds:', error);
     res.status(500).json({ error: 'Failed to fetch beds' });
   }
-});
+}
 
-app.post('/api/beds', async (req, res) => {
-  try {
-    const { bedNumber, unitId } = req.body;
-    const bed = await prisma.bed.create({
-      data: {
-        bedNumber,
-        unitId,
-        status: 'AVAILABLE',
-      },
-      include: { unit: true },
-    });
-    res.status(201).json(bed);
-  } catch (error) {
-    res.status(400).json({ error: 'Failed to create bed' });
-  }
-});
-
-// UNITS
-app.get('/api/units', async (req, res) => {
-  try {
-    const units = await prisma.unit.findMany({
-      include: {
-        beds: true,
-      },
-    });
-    res.json(units);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch units' });
-  }
-});
-
-app.post('/api/units', async (req, res) => {
-  try {
-    const { name, floor, capacity } = req.body;
-    const unit = await prisma.unit.create({
-      data: { name, floor, capacity },
-    });
-    res.status(201).json(unit);
-  } catch (error) {
-    res.status(400).json({ error: 'Failed to create unit' });
-  }
-});
-
-// PATIENTS
-app.get('/api/patients', async (req, res) => {
-  try {
-    const patients = await prisma.patient.findMany({
-      include: { admissions: true },
-    });
-    res.json(patients);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch patients' });
-  }
-});
-
-app.post('/api/patients', async (req, res) => {
-  try {
-    const { mrn, firstName, lastName, dateOfBirth, gender } = req.body;
-    const patient = await prisma.patient.create({
-      data: {
-        mrn,
-        firstName,
-        lastName,
-        dateOfBirth: new Date(dateOfBirth),
-        gender,
-      },
-    });
-    res.status(201).json(patient);
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ error: 'Failed to create patient' });
-  }
-});
-
-// ADMISSIONS
-app.get('/api/admissions', async (req, res) => {
-  try {
-    const admissions = await prisma.admission.findMany({
-      include: {
-        patient: true,
-        bed: {
-          include: { unit: true },
-        },
-        discharge: true,
-      },
-    });
-    res.json(admissions);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch admissions' });
-  }
-});
-
-app.post('/api/admissions', async (req, res) => {
-  try {
-    const { patientId, bedId, clinicalLevel, admissionDate } = req.body;
-    const admission = await prisma.admission.create({
-      data: {
-        patientId,
-        bedId,
-        clinicalLevel,
-        admissionDate: new Date(admissionDate),
-      },
-      include: {
-        patient: true,
-        bed: {
-          include: { unit: true },
-        },
-      },
-    });
-
-    // Update bed status
-    await prisma.bed.update({
-      where: { id: bedId },
-      data: { status: 'OCCUPIED' },
-    });
-
-    res.status(201).json(admission);
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ error: 'Failed to create admission' });
-  }
-});
-
-// DISCHARGES
-app.get('/api/discharges', async (req, res) => {
-  try {
-    const discharges = await prisma.discharge.findMany({
-      include: {
-        admission: {
-          include: {
-            patient: true,
-            bed: {
-              include: { unit: true },
-            },
+// Get all units
+async function handleUnits(req, res) {
+  if (req.method === 'GET') {
+    try {
+      const units = await getPrisma().unit.findMany({
+        include: { beds: true },
+      });
+      res.status(200).json(units);
+    } catch (error) {
+      console.error('Failed to fetch units:', error);
+      res.status(500).json({ error: 'Failed to fetch units' });
+    }
+  } else if (req.method === 'POST') {
+    try {
+      const { name, floor, totalBeds } = req.body;
+      const unit = await getPrisma().unit.create({
+        data: {
+          name,
+          floor,
+          totalBeds,
+          beds: {
+            create: Array.from({ length: totalBeds }).map((_, i) => ({
+              roomNumber: `${floor}${String(i + 1).padStart(2, '0')}`,
+              bedNumber: i + 1,
+              status: 'AVAILABLE',
+            })),
           },
         },
-      },
-    });
-    res.json(discharges);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch discharges' });
-  }
-});
-
-app.post('/api/discharges', async (req, res) => {
-  try {
-    const { admissionId, scheduledDate, dischargeType } = req.body;
-    const discharge = await prisma.discharge.create({
-      data: {
-        admissionId,
-        scheduledDate: new Date(scheduledDate),
-        dischargeType,
-        status: 'SCHEDULED',
-      },
-      include: {
-        admission: {
-          include: { patient: true },
-        },
-      },
-    });
-
-    // Update bed status
-    const admission = await prisma.admission.findUnique({
-      where: { id: admissionId },
-    });
-    if (admission) {
-      await prisma.bed.update({
-        where: { id: admission.bedId },
-        data: { status: 'PENDING_DISCHARGE' },
+        include: { beds: true },
       });
+      res.status(201).json(unit);
+    } catch (error) {
+      console.error('Failed to create unit:', error);
+      res.status(400).json({ error: 'Failed to create unit' });
     }
-
-    res.status(201).json(discharge);
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ error: 'Failed to create discharge' });
+  } else {
+    res.status(405).json({ error: 'Method not allowed' });
   }
-});
+}
 
-app.patch('/api/discharges/:id/confirm', async (req, res) => {
+// Route handler dispatcher
+module.exports = async (req, res) => {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  const { pathname } = new URL(req.url, `http://${req.headers.host}`);
+
   try {
-    const { id } = req.params;
-    const discharge = await prisma.discharge.update({
-      where: { id: parseInt(id) },
-      data: {
-        status: 'CONFIRMED',
-        actualDate: new Date(),
-      },
-      include: {
-        admission: {
-          include: { patient: true },
-        },
-      },
-    });
-
-    // Update bed status back to AVAILABLE
-    const admission = await prisma.admission.findUnique({
-      where: { id: discharge.admissionId },
-    });
-    if (admission) {
-      await prisma.bed.update({
-        where: { id: admission.bedId },
-        data: { status: 'AVAILABLE' },
+    if (pathname === '/api/health' || pathname === '/health') {
+      await handleHealth(req, res);
+    } else if (pathname === '/api/beds' || pathname === '/beds') {
+      await handleBeds(req, res);
+    } else if (pathname.startsWith('/api/beds/unit/') || pathname.startsWith('/beds/unit/')) {
+      // Parse unitId from URL
+      const parts = pathname.split('/');
+      req.query.unitId = parts[parts.length - 1];
+      await handleBedsByUnit(req, res);
+    } else if (pathname === '/api/units' || pathname === '/units') {
+      await handleUnits(req, res);
+    } else if (pathname === '/api' || pathname === '/') {
+      res.status(200).json({ 
+        message: 'NyxBeacon Hospital Bed Board API',
+        version: '1.0.0',
+        endpoints: [
+          '/api/health - Health check',
+          '/api/beds - Get all beds',
+          '/api/beds/unit/:unitId - Get beds by unit',
+          '/api/units - Get all units'
+        ]
       });
+    } else {
+      res.status(404).json({ error: 'Not found' });
     }
-
-    res.json(discharge);
   } catch (error) {
-    console.error(error);
-    res.status(400).json({ error: 'Failed to confirm discharge' });
+    console.error('API error:', error);
+    res.status(500).json({ error: 'Internal server error', message: error.message });
   }
-});
-
-module.exports = app;
+};
