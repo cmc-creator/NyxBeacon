@@ -1,5 +1,4 @@
 {
-  "buildCommand": "npm run build-client && npm run --prefix packages/server build",
   "installCommand": "npm install --force",
   "outputDirectory": "packages/client/dist",
   "functions": {
