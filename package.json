@@ -1,6 +1,6 @@
 {
   "name": "nyxbeacon-bedboard",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Hospital Bed Board & Patient Management System",
   "private": true,
   "scripts": {
