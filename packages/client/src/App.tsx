@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-// Build: 2026-07-20T20:58:00Z - Vercel serverless API integration
+// Build: 2026-07-20T22:30:00Z - Vercel serverless API integration (forced rebuild)
 import { BedBoard } from './components/BedBoard'
 import { PatientManagement } from './components/PatientManagement'
 import { DischargeManagement } from './components/DischargeManagement'
