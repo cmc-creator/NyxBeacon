@@ -1,18 +1,10 @@
 {
-  "buildCommand": "npm run build-client",
+  "buildCommand": "npm run build-client && npm run --prefix packages/server build",
   "installCommand": "npm install --force",
   "outputDirectory": "packages/client/dist",
   "functions": {
     "api/index.js": {
-      "runtime": "@vercel/node@3.0.0",
-      "memory": 1024,
-      "maxDuration": 30
+      "runtime": "@vercel/node@3.0.0"
     }
-  },
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api"
-    }
-  ]
+  }
 }
