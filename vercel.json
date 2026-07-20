@@ -1,11 +1,9 @@
 {
-  "buildCommand": "npm install --force && npm run --prefix packages/server build && npm run --prefix packages/client build",
   "installCommand": "npm install --force",
   "outputDirectory": "packages/client/dist",
   "functions": {
     "api/index.js": {
-      "runtime": "@vercel/node@3.0.0",
-      "excludeFiles": "node_modules/**"
+      "runtime": "@vercel/node@3.0.0"
     }
   }
 }
