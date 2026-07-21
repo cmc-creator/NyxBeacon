@@ -14,7 +14,7 @@ function App() {
 
   useEffect(() => {
     // Simple health check
-    fetch('/api/health')
+    fetch('/health')
       .then(() => setIsConnected(true))
       .catch(() => setIsConnected(false))
   }, [])

@@ -1,8 +1,7 @@
 import axios from 'axios'
 
-// Force using Vercel serverless API - /api routes on same domain
-// API routes are rewritten by vercel.json to hit /api/index.js serverless function
-const API_BASE_URL = '/api'
+// Use localhost:3000 for development/testing
+const API_BASE_URL = 'http://localhost:3000/api'
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
